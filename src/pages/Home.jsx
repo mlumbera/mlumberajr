@@ -1,7 +1,7 @@
 function Home() {
   return (
     <div className="home">
-      <h1>Welcome to My Portfolio</h1>
+      <h1>Welcome to My Website</h1>
       <section className="hero">
         <h2>Hi, I'm MJ</h2>
         <p>I love life</p>
