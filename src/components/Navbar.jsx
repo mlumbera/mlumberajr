@@ -9,9 +9,7 @@ function Navbar() {
       </div>
       <div className="navbar-links">
         <Link to="/">Home</Link>
-        {/* <Link to="/projects">Projects</Link>
-        <Link to="/blog">Blog</Link>
-        <Link to="/contact">Contact</Link> */}
+        <Link to="/guestbook">Guestbook</Link>
       </div>
     </nav>
   )
