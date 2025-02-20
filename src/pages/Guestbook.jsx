@@ -9,13 +9,16 @@ function Guestbook() {
   // Load messages when component mounts
   useEffect(() => {
     fetchMessages();
+    
     // Set up real-time subscription
     const subscription = supabase
       .channel('messages')
       .on('postgres_changes', 
-          { event: 'INSERT', schema: 'public', table: 'messages' },
+          { event: '*', schema: 'public', table: 'messages' },
           (payload) => {
-            setMessages(messages => [payload.new, ...messages]);
+            if (payload.new.status === 'approved') {
+              setMessages(messages => [payload.new, ...messages]);
+            }
           }
       )
       .subscribe();
@@ -29,6 +32,7 @@ function Guestbook() {
     const { data, error } = await supabase
       .from('messages')
       .select('*')
+      .eq('status', 'approved')
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -45,31 +49,26 @@ function Guestbook() {
     const message = {
       name: name,
       content: newMessage,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      status: 'pending'
     };
     
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('messages')
-      .insert([message])
-      .select();
+      .insert([message]);
 
     if (error) {
       console.error('Error inserting message:', error);
     } else {
-      setMessages(messages => [data[0], ...messages]);
       setNewMessage('');
       setName('');
+      alert('Thank you! Your message will be visible after approval.');
     }
   };
 
   return (
     <div className="guestbook">
       <h1>Guestbook</h1>
-      
-      <section className="hero">
-        <h2>Hi, I'm MJ</h2>
-        <p>I love life</p>
-      </section>
 
       <section className="sign-guestbook">
         <h2>Sign the Guestbook</h2>
