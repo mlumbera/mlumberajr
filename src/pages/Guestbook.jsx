@@ -10,6 +10,11 @@ function Guestbook() {
   useEffect(() => {
     fetchMessages();
     
+    // Set up auth state listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      fetchMessages();
+    });
+
     // Set up real-time subscription
     const subscription = supabase
       .channel('messages')
@@ -25,6 +30,7 @@ function Guestbook() {
 
     return () => {
       subscription.unsubscribe();
+      if (authListener) authListener.subscription.unsubscribe();
     };
   }, []);
 
