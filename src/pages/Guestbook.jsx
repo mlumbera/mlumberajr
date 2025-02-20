@@ -8,10 +8,12 @@ function Guestbook() {
 
   // Load messages when component mounts
   useEffect(() => {
+    console.log('Setting up Guestbook listeners');
     fetchMessages();
     
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+    // Set up auth state listener with explicit event handling
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, !!session);
       fetchMessages();
     });
 
@@ -21,6 +23,7 @@ function Guestbook() {
       .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'messages' },
           (payload) => {
+            console.log('Received real-time update:', payload);
             if (payload.new.status === 'approved') {
               setMessages(messages => [payload.new, ...messages]);
             }
@@ -29,12 +32,14 @@ function Guestbook() {
       .subscribe();
 
     return () => {
+      console.log('Cleaning up Guestbook listeners');
       subscription.unsubscribe();
       if (authListener) authListener.subscription.unsubscribe();
     };
   }, []);
 
   async function fetchMessages() {
+    console.log('Fetching messages...');
     const { data, error } = await supabase
       .from('messages')
       .select('*')
@@ -44,6 +49,7 @@ function Guestbook() {
     if (error) {
       console.error('Error fetching messages:', error);
     } else {
+      console.log('Successfully fetched messages:', data?.length);
       setMessages(data);
     }
   }
