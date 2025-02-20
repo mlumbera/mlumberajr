@@ -11,6 +11,7 @@
     "deploy": "npm run build && aws s3 sync dist/ s3://mlumberajr.com && aws cloudfront create-invalidation --distribution-id E1N3HHG3ZDG576 --paths \"/*\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
     "firebase": "^11.3.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { ref, push, onValue } from 'firebase/database';
+import { supabase } from '../supabase';
 
 function Guestbook() {
   const [messages, setMessages] = useState([]);
@@ -9,36 +8,58 @@ function Guestbook() {
 
   // Load messages when component mounts
   useEffect(() => {
-    const messagesRef = ref(db, 'messages');
-    onValue(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Convert object to array and reverse to show newest first
-        const messagesList = Object.entries(data).map(([key, value]) => ({
-          id: key,
-          ...value
-        })).reverse();
-        setMessages(messagesList);
-      }
-    });
+    fetchMessages();
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('messages')
+      .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'messages' },
+          (payload) => {
+            setMessages(messages => [payload.new, ...messages]);
+          }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleSubmit = (e) => {
+  async function fetchMessages() {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching messages:', error);
+    } else {
+      setMessages(data);
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !name.trim()) return;
     
     const message = {
       name: name,
       content: newMessage,
-      date: new Date().toLocaleDateString()
+      created_at: new Date().toISOString()
     };
     
-    // Push new message to Firebase
-    const messagesRef = ref(db, 'messages');
-    push(messagesRef, message);
-    
-    setNewMessage('');
-    setName('');
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([message])
+      .select();
+
+    if (error) {
+      console.error('Error inserting message:', error);
+    } else {
+      setMessages(messages => [data[0], ...messages]);
+      setNewMessage('');
+      setName('');
+    }
   };
 
   return (
@@ -53,7 +74,7 @@ function Guestbook() {
       <section className="sign-guestbook">
         <h2>Sign the Guestbook</h2>
         <form onSubmit={handleSubmit} className="guestbook-form">
-          <input    
+          <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -76,7 +97,7 @@ function Guestbook() {
           <div key={message.id} className="message">
             <p className="message-content">{message.content}</p>
             <p className="message-meta">
-              - {message.name} on {message.date}
+              - {message.name} on {new Date(message.created_at).toLocaleDateString()}
             </p>
           </div>
         ))}
