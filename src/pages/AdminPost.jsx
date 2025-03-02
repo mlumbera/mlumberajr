@@ -10,6 +10,7 @@ function AdminPost() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [image, setImage] = useState(null);
+  const [postType, setPostType] = useState('blog');
 
   useEffect(() => {
     checkUser();
@@ -93,14 +94,15 @@ function AdminPost() {
         imageUrl = publicUrl;
       }
 
-      // Create post
+      // Create post with type
       const { error } = await supabase
         .from('posts')
         .insert([
           {
             title,
             content,
-            image_url: imageUrl
+            image_url: imageUrl,
+            post_type: postType
           }
         ]);
 
@@ -110,6 +112,7 @@ function AdminPost() {
       setTitle('');
       setContent('');
       setImage(null);
+      setPostType('blog');
       alert('Post created successfully!');
 
     } catch (error) {
@@ -124,6 +127,30 @@ function AdminPost() {
     <div className="admin-post">
       <h1>Create New Post</h1>
       <form onSubmit={handleSubmit} className="post-form">
+        <div className="form-group">
+          <label>Post Type:</label>
+          <div className="radio-group">
+            <label>
+              <input
+                type="radio"
+                value="blog"
+                checked={postType === 'blog'}
+                onChange={(e) => setPostType(e.target.value)}
+              />
+              Blog
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="sil"
+                checked={postType === 'sil'}
+                onChange={(e) => setPostType(e.target.value)}
+              />
+              Stuff I Like
+            </label>
+          </div>
+        </div>
+
         <div className="form-group">
           <label htmlFor="title">Title:</label>
           <input

@@ -75,3 +75,15 @@ button:disabled {
 .admin-login button {
   margin-top: 10px;
 } 
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
